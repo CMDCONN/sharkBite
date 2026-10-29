@@ -23,6 +23,36 @@
         "command": "sharkbite.compressImages",
         "title": "Compress Images",
         "category": "SharkBite"
+      },
+      {
+        "command": "sharkbite.compressChecked",
+        "title": "Compress Selected Images",
+        "category": "SharkBite",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "sharkbite.compressOne",
+        "title": "Compress This Image",
+        "category": "SharkBite",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "sharkbite.refresh",
+        "title": "Refresh Image List",
+        "category": "SharkBite",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sharkbite.checkAll",
+        "title": "Select All Images",
+        "category": "SharkBite",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "sharkbite.uncheckAll",
+        "title": "Clear Selection",
+        "category": "SharkBite",
+        "icon": "$(clear-all)"
       }
     ],
     "configuration": {
@@ -46,6 +76,89 @@
           "description": "Glob pattern of files to leave out of the image list."
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sharkbite",
+          "title": "SharkBite",
+          "icon": "media/sharkbite.svg"
+        }
+      ]
+    },
+    "views": {
+      "sharkbite": [
+        {
+          "id": "sharkbite.images",
+          "name": "Images",
+          "icon": "media/sharkbite.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sharkbite.images",
+        "contents": "Open a folder to see its images.\n[Open Folder](command:workbench.action.files.openFolder)",
+        "when": "workbenchState == empty"
+      },
+      {
+        "view": "sharkbite.images",
+        "contents": "No images found in this workspace.\n[Refresh](command:sharkbite.refresh)",
+        "when": "workbenchState != empty"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "sharkbite.compressChecked",
+          "when": "view == sharkbite.images",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sharkbite.checkAll",
+          "when": "view == sharkbite.images",
+          "group": "navigation@2"
+        },
+        {
+          "command": "sharkbite.uncheckAll",
+          "when": "view == sharkbite.images",
+          "group": "navigation@3"
+        },
+        {
+          "command": "sharkbite.refresh",
+          "when": "view == sharkbite.images",
+          "group": "navigation@4"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sharkbite.compressOne",
+          "when": "view == sharkbite.images && viewItem == image",
+          "group": "inline"
+        },
+        {
+          "command": "sharkbite.compressOne",
+          "when": "view == sharkbite.images && viewItem == image"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "sharkbite.compressChecked",
+          "when": "false"
+        },
+        {
+          "command": "sharkbite.compressOne",
+          "when": "false"
+        },
+        {
+          "command": "sharkbite.checkAll",
+          "when": "false"
+        },
+        {
+          "command": "sharkbite.uncheckAll",
+          "when": "false"
+        }
+      ]
     }
   },
   "scripts": {

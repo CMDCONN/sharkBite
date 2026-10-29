@@ -1,22 +1,26 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import { BACKUP_FILE, CompressionLevel, IMAGE_GLOB, backupPath, compressImage, formatBytes, optionsForLevel, runLimited } from './compress';
-
-interface ImageItem extends vscode.QuickPickItem {
-  uri: vscode.Uri;
-  size: number;
-}
+import { CompressionLevel, backupPath, compressImage, formatBytes, optionsForLevel, runLimited } from './compress';
+import { ImageItem, findImages } from './images';
+import { ImagesView } from './imagesView';
 
 // sharp runs as WebAssembly (see .npmrc), which shares one memory heap, so keep this modest.
 const CONCURRENCY = 4;
 
 let output: vscode.OutputChannel;
+let imagesView: ImagesView;
 
 export function activate(context: vscode.ExtensionContext) {
   output = vscode.window.createOutputChannel('SharkBite');
+  imagesView = new ImagesView();
   context.subscriptions.push(
     output,
+    imagesView,
     vscode.commands.registerCommand('sharkbite.compressImages', compressImagesCommand),
+    vscode.commands.registerCommand('sharkbite.compressChecked', () => compressWithLevelPick(imagesView.checkedImages)),
+    vscode.commands.registerCommand('sharkbite.compressOne', (item: ImageItem) => compressWithLevelPick([item])),
+    vscode.commands.registerCommand('sharkbite.refresh', () => imagesView.refresh()),
+    vscode.commands.registerCommand('sharkbite.checkAll', () => imagesView.setAllChecked(true)),
+    vscode.commands.registerCommand('sharkbite.uncheckAll', () => imagesView.setAllChecked(false)),
   );
 }
 
@@ -46,14 +50,24 @@ async function compressImagesCommand() {
     return;
   }
 
+  await compressWithLevelPick(picked);
+}
+
+async function compressWithLevelPick(items: ImageItem[]) {
+  if (items.length === 0) {
+    vscode.window.showInformationMessage('SharkBite: tick some images in the list first.');
+    return;
+  }
+
   const level = await vscode.window.showQuickPick(LEVEL_ITEMS, {
-    placeHolder: `How hard should ${picked.length} image${picked.length === 1 ? '' : 's'} be compressed?`,
+    placeHolder: `How hard should ${items.length} image${items.length === 1 ? '' : 's'} be compressed?`,
   });
   if (!level) {
     return;
   }
 
-  await compressAll(picked, level.level);
+  await compressAll(items, level.level);
+  await imagesView.refresh();
 }
 
 const LEVEL_ITEMS: (vscode.QuickPickItem & { level: CompressionLevel })[] = [
@@ -61,24 +75,6 @@ const LEVEL_ITEMS: (vscode.QuickPickItem & { level: CompressionLevel })[] = [
   { level: 'light', label: 'Light', description: 'Barely noticeable changes, smaller savings (PNGs stay lossless)' },
   { level: 'heavy', label: 'Heavy', description: 'Smallest files, visible quality loss is possible' },
 ];
-
-async function findImages(): Promise<ImageItem[]> {
-  const exclude = vscode.workspace.getConfiguration('sharkbite').get<string>('exclude') || null;
-  const uris = (await vscode.workspace.findFiles(IMAGE_GLOB, exclude)).filter(u => !BACKUP_FILE.test(u.path));
-  const multiRoot = (vscode.workspace.workspaceFolders?.length ?? 0) > 1;
-
-  const items = await Promise.all(uris.map(async (uri): Promise<ImageItem> => {
-    const { size } = await vscode.workspace.fs.stat(uri);
-    const dir = path.posix.dirname(vscode.workspace.asRelativePath(uri, multiRoot));
-    return {
-      uri,
-      size,
-      label: path.posix.basename(uri.path),
-      description: `${dir === '.' ? '' : dir + ' · '}${formatBytes(size)}`,
-    };
-  }));
-  return items.sort((a, b) => a.uri.path.localeCompare(b.uri.path));
-}
 
 async function compressAll(items: ImageItem[], level: CompressionLevel) {
   const config = vscode.workspace.getConfiguration('sharkbite');

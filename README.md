@@ -14,6 +14,13 @@ Compress lots of images in one go from the command palette.
 4. The selected images are compressed in place, and a summary shows how much was saved.
    Per-file results are in the **SharkBite** output channel.
 
+### Sidebar
+
+Click the **SharkBite** icon in the activity bar for the same thing as a panel. It lists every image with a
+checkbox and shows how many are ticked. The buttons at the top compress the ticked images, select all, clear
+the selection, and refresh the list. Hover over an image to compress just that one, or click it to open it.
+The list updates when images are added, deleted or compressed, and your ticks are kept.
+
 An image is only overwritten if the compressed version is smaller. Before overwriting, the original is
 saved next to it as `name.bac.ext` (e.g. `photo.png` → `photo.bac.png`). If a backup already exists it is
 left alone, so compressing an image twice never replaces the true original. Backups are hidden from the list.
