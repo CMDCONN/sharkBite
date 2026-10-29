@@ -1,0 +1,66 @@
+{
+  "name": "sharkbite",
+  "displayName": "SharkBite Image Compressor",
+  "description": "Pick images from your workspace and compress them all at once.",
+  "version": "0.0.1",
+  "publisher": "cmdconn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CMDCONN/sharkBite"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "sharkbite.compressImages",
+        "title": "Compress Images",
+        "category": "SharkBite"
+      }
+    ],
+    "configuration": {
+      "title": "SharkBite",
+      "properties": {
+        "sharkbite.quality": {
+          "type": "number",
+          "default": 80,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Quality used for lossy formats (JPEG, WebP, AVIF, palette PNG, GIF)."
+        },
+        "sharkbite.backupOriginals": {
+          "type": "boolean",
+          "default": true,
+          "description": "Save a copy of each original as <name>.bac.<ext> (e.g. photo.bac.png) before overwriting it."
+        },
+        "sharkbite.exclude": {
+          "type": "string",
+          "default": "**/{node_modules,.git,out,dist}/**",
+          "description": "Glob pattern of files to leave out of the image list."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -watch -p .",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "sharp": "^0.34.5",
+    "svgo": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/vscode": "~1.90.0",
+    "@vscode/vsce": "^3.9.2",
+    "typescript": "^5.9.3"
+  }
+}
