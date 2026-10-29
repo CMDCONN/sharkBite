@@ -33,7 +33,7 @@
           "default": 80,
           "minimum": 1,
           "maximum": 100,
-          "description": "Quality used for lossy formats (JPEG, WebP, AVIF, palette PNG, GIF)."
+          "description": "Quality for lossy formats at the Default level. Light uses this +12 and Heavy uses this -25."
         },
         "sharkbite.backupOriginals": {
           "type": "boolean",

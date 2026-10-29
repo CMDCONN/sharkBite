@@ -7,7 +7,11 @@ Compress lots of images in one go from the command palette.
 1. Open the command palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **SharkBite: Compress Images**.
 2. Every image in the workspace is listed with its folder and size. Type to filter, press `Space` to
    select images (or tick the box at the top to select all).
-3. Press `Enter`. The selected images are compressed in place, and a summary shows how much was saved.
+3. Press `Enter`, then choose how hard to compress:
+   - **Default**: a good balance of size and quality.
+   - **Light**: barely noticeable changes and smaller savings. PNGs are recompressed losslessly.
+   - **Heavy**: the smallest files, but quality loss may be visible. PNG and GIF are cut to 64 colours.
+4. The selected images are compressed in place, and a summary shows how much was saved.
    Per-file results are in the **SharkBite** output channel.
 
 An image is only overwritten if the compressed version is smaller. Before overwriting, the original is
@@ -30,7 +34,7 @@ Metadata (EXIF etc.) is stripped; EXIF rotation is applied to the pixels first s
 
 ## Settings
 
-- `sharkbite.quality` (default `80`) — quality for lossy formats, 1–100.
+- `sharkbite.quality` (default `80`): quality for lossy formats at the Default level, 1–100. Light uses this +12, Heavy uses this −25.
 - `sharkbite.backupOriginals` (default `true`) — keep a copy as `name.bac.ext` before overwriting.
 - `sharkbite.exclude` — glob of paths to leave out of the list (default skips `node_modules`, `.git`, `out`, `dist`).
 

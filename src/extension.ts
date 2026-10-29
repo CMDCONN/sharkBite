@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { BACKUP_FILE, IMAGE_GLOB, backupPath, compressImage, formatBytes, runLimited } from './compress';
+import { BACKUP_FILE, CompressionLevel, IMAGE_GLOB, backupPath, compressImage, formatBytes, optionsForLevel, runLimited } from './compress';
 
 interface ImageItem extends vscode.QuickPickItem {
   uri: vscode.Uri;
@@ -46,8 +46,21 @@ async function compressImagesCommand() {
     return;
   }
 
-  await compressAll(picked);
+  const level = await vscode.window.showQuickPick(LEVEL_ITEMS, {
+    placeHolder: `How hard should ${picked.length} image${picked.length === 1 ? '' : 's'} be compressed?`,
+  });
+  if (!level) {
+    return;
+  }
+
+  await compressAll(picked, level.level);
 }
+
+const LEVEL_ITEMS: (vscode.QuickPickItem & { level: CompressionLevel })[] = [
+  { level: 'default', label: 'Default', description: 'Good balance of size and quality' },
+  { level: 'light', label: 'Light', description: 'Barely noticeable changes, smaller savings (PNGs stay lossless)' },
+  { level: 'heavy', label: 'Heavy', description: 'Smallest files, visible quality loss is possible' },
+];
 
 async function findImages(): Promise<ImageItem[]> {
   const exclude = vscode.workspace.getConfiguration('sharkbite').get<string>('exclude') || null;
@@ -67,9 +80,9 @@ async function findImages(): Promise<ImageItem[]> {
   return items.sort((a, b) => a.uri.path.localeCompare(b.uri.path));
 }
 
-async function compressAll(items: ImageItem[]) {
+async function compressAll(items: ImageItem[], level: CompressionLevel) {
   const config = vscode.workspace.getConfiguration('sharkbite');
-  const quality = config.get<number>('quality', 80);
+  const options = optionsForLevel(level, config.get<number>('quality', 80));
   const backup = config.get<boolean>('backupOriginals', true);
 
   let done = 0, compressed = 0, saved = 0;
@@ -82,7 +95,7 @@ async function compressAll(items: ImageItem[]) {
       const name = vscode.workspace.asRelativePath(item.uri);
       try {
         const input = await vscode.workspace.fs.readFile(item.uri);
-        const out = await compressImage(input, item.uri.path, { quality });
+        const out = await compressImage(input, item.uri.path, options);
         if (out) {
           // Keep an existing backup: it holds the true original if this image was compressed before.
           const backupUri = item.uri.with({ path: backupPath(item.uri.path) });
@@ -105,7 +118,7 @@ async function compressAll(items: ImageItem[]) {
     }),
   );
 
-  let summary = `SharkBite: compressed ${compressed} of ${items.length} images, saved ${formatBytes(saved)}.`;
+  let summary = `SharkBite (${level}): compressed ${compressed} of ${items.length} images, saved ${formatBytes(saved)}.`;
   if (done < items.length) summary += ` Cancelled after ${done}.`;
   if (failed.length) {
     const choice = await vscode.window.showWarningMessage(`${summary} ${failed.length} failed.`, 'Show Log');

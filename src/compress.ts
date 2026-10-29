@@ -14,8 +14,26 @@ export function backupPath(filePath: string): string {
   return filePath.slice(0, dot) + '.bac' + filePath.slice(dot);
 }
 
+export type CompressionLevel = 'light' | 'default' | 'heavy';
+
 export interface CompressOptions {
   quality: number;
+  /** Max palette size for PNG and GIF. */
+  colours: number;
+  /** Quantise PNGs to a palette (lossy). Off means lossless PNG recompression only. */
+  pngPalette: boolean;
+}
+
+/** Light and heavy are offsets from the default quality, so the `quality` setting moves all three. */
+export function optionsForLevel(level: CompressionLevel, defaultQuality: number): CompressOptions {
+  switch (level) {
+    case 'light':
+      return { quality: Math.min(100, defaultQuality + 12), colours: 256, pngPalette: false };
+    case 'default':
+      return { quality: defaultQuality, colours: 256, pngPalette: true };
+    case 'heavy':
+      return { quality: Math.max(1, defaultQuality - 25), colours: 64, pngPalette: true };
+  }
 }
 
 /**
@@ -33,7 +51,7 @@ function compressSvg(input: Uint8Array): Buffer {
 }
 
 async function compressRaster(input: Uint8Array, opts: CompressOptions): Promise<Buffer | undefined> {
-  const { quality } = opts;
+  const { quality, colours, pngPalette } = opts;
   let img = sharp(input, { animated: true });
   const meta = await img.metadata();
 
@@ -46,12 +64,14 @@ async function compressRaster(input: Uint8Array, opts: CompressOptions): Promise
     case 'jpeg':
       return img.jpeg({ quality, mozjpeg: true }).toBuffer();
     case 'png':
-      return img.png({ quality, compressionLevel: 9, palette: true, effort: 10 }).toBuffer();
+      return pngPalette
+        ? img.png({ quality, colours, compressionLevel: 9, palette: true, effort: 10 }).toBuffer()
+        : img.png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer();
     case 'webp':
       return img.webp({ quality, effort: 6 }).toBuffer();
     case 'gif':
       // Higher quality → smaller allowed error when reusing palettes between frames.
-      return img.gif({ effort: 10, reuse: true, interFrameMaxError: Math.round((100 - quality) / 4) }).toBuffer();
+      return img.gif({ colours, effort: 10, reuse: true, interFrameMaxError: Math.round((100 - quality) / 4) }).toBuffer();
     case 'tiff':
       return img.tiff({ compression: 'deflate', predictor: 'horizontal' }).toBuffer();
     case 'heif':
