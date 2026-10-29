@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
-import { CompressionLevel, backupPath, compressImage, formatBytes, optionsForLevel, runLimited } from './compress';
+import { BACKUP_FILE, CompressionLevel, IMAGE_EXTENSIONS, backupPath, compressImage, formatBytes, optionsForLevel, runLimited } from './compress';
 import { ImageItem, findImages } from './images';
 import { ImagesView } from './imagesView';
 
 // sharp runs as WebAssembly (see .npmrc), which shares one memory heap, so keep this modest.
 const CONCURRENCY = 4;
+
+type CompressTarget = Pick<ImageItem, 'uri'>;
 
 let output: vscode.OutputChannel;
 let imagesView: ImagesView;
@@ -18,6 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('sharkbite.compressImages', compressImagesCommand),
     vscode.commands.registerCommand('sharkbite.compressChecked', () => compressWithLevelPick(imagesView.checkedImages)),
     vscode.commands.registerCommand('sharkbite.compressOne', (item: ImageItem) => compressWithLevelPick([item])),
+    vscode.commands.registerCommand('sharkbite.compressFiles', compressFilesCommand),
     vscode.commands.registerCommand('sharkbite.refresh', () => imagesView.refresh()),
     vscode.commands.registerCommand('sharkbite.checkAll', () => imagesView.setAllChecked(true)),
     vscode.commands.registerCommand('sharkbite.uncheckAll', () => imagesView.setAllChecked(false)),
@@ -53,7 +56,22 @@ async function compressImagesCommand() {
   await compressWithLevelPick(picked);
 }
 
-async function compressWithLevelPick(items: ImageItem[]) {
+/** Explorer context menu: VS Code passes the clicked file plus the whole multi-selection, if any. */
+async function compressFilesCommand(clicked?: vscode.Uri, selected?: vscode.Uri[]) {
+  const uris = selected?.length ? selected : clicked ? [clicked] : [];
+  // The menu's `when` clause can't see multi-selections, so re-check here. Never compress a backup:
+  // it's the only copy of the original.
+  const images = uris
+    .filter(u => IMAGE_EXTENSIONS.includes(u.path.split('.').pop()!.toLowerCase()) && !BACKUP_FILE.test(u.path))
+    .map(uri => ({ uri }));
+  if (images.length === 0) {
+    vscode.window.showInformationMessage('SharkBite: nothing to compress in that selection (backups are skipped).');
+    return;
+  }
+  await compressWithLevelPick(images);
+}
+
+async function compressWithLevelPick(items: CompressTarget[]) {
   if (items.length === 0) {
     vscode.window.showInformationMessage('SharkBite: tick some images in the list first.');
     return;
@@ -76,7 +94,7 @@ const LEVEL_ITEMS: (vscode.QuickPickItem & { level: CompressionLevel })[] = [
   { level: 'heavy', label: 'Heavy', description: 'Smallest files, visible quality loss is possible' },
 ];
 
-async function compressAll(items: ImageItem[], level: CompressionLevel) {
+async function compressAll(items: CompressTarget[], level: CompressionLevel) {
   const config = vscode.workspace.getConfiguration('sharkbite');
   const options = optionsForLevel(level, config.get<number>('quality', 80));
   const backup = config.get<boolean>('backupOriginals', true);

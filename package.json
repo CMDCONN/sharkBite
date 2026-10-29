@@ -37,6 +37,11 @@
         "icon": "$(zap)"
       },
       {
+        "command": "sharkbite.compressFiles",
+        "title": "Compress Image(s)",
+        "category": "SharkBite"
+      },
+      {
         "command": "sharkbite.refresh",
         "title": "Refresh Image List",
         "category": "SharkBite",
@@ -157,6 +162,17 @@
         {
           "command": "sharkbite.uncheckAll",
           "when": "false"
+        },
+        {
+          "command": "sharkbite.compressFiles",
+          "when": "false"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "sharkbite.compressFiles",
+          "when": "!explorerResourceIsFolder && resourceFilename =~ /^(?!.*\\.bac\\.[^.]+$).*\\.(png|jpg|jpeg|jfif|webp|avif|gif|tif|tiff|svg)$/i",
+          "group": "7_modification"
         }
       ]
     }

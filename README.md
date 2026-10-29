@@ -21,6 +21,11 @@ checkbox and shows how many are ticked. The buttons at the top compress the tick
 the selection, and refresh the list. Hover over an image to compress just that one, or click it to open it.
 The list updates when images are added, deleted or compressed, and your ticks are kept.
 
+### Right-click in the Explorer
+
+Right-click any image in the file Explorer and choose **Compress Image(s)**. To do several at once, select
+them with `Ctrl`/`Shift`-click first. You then pick a level as above. Backup files never show this option.
+
 An image is only overwritten if the compressed version is smaller. Before overwriting, the original is
 saved next to it as `name.bac.ext` (e.g. `photo.png` → `photo.bac.png`). If a backup already exists it is
 left alone, so compressing an image twice never replaces the true original. Backups are hidden from the list.
