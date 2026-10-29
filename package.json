@@ -1,0 +1,65 @@
+{
+  "name": "sharkbite",
+  "displayName": "SharkBite Image Compressor",
+  "description": "Bulk-compress PNG, JPEG and WebP images from the Explorer.",
+  "version": "0.0.1",
+  "publisher": "cmdconn",
+  "license": "MIT",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      { "command": "sharkbite.compress", "title": "Compress Images", "category": "SharkBite" },
+      { "command": "sharkbite.compressWorkspace", "title": "Compress All Images in Workspace", "category": "SharkBite" }
+    ],
+    "menus": {
+      "explorer/context": [
+        { "command": "sharkbite.compress", "group": "7_modification" }
+      ],
+      "commandPalette": [
+        { "command": "sharkbite.compress", "when": "false" }
+      ]
+    },
+    "configuration": {
+      "title": "SharkBite",
+      "properties": {
+        "sharkbite.quality": {
+          "type": "number", "default": 80, "minimum": 1, "maximum": 100,
+          "description": "Quality used for JPEG, WebP and palette PNG output."
+        },
+        "sharkbite.minSizeKB": {
+          "type": "number", "default": 0,
+          "description": "Skip images smaller than this size (in KB)."
+        },
+        "sharkbite.backupOriginals": {
+          "type": "boolean", "default": false,
+          "description": "Save a copy of each original as <name>.orig.<ext> before overwriting it."
+        },
+        "sharkbite.concurrency": {
+          "type": "number", "default": 4, "minimum": 1,
+          "description": "How many images to compress at the same time."
+        },
+        "sharkbite.exclude": {
+          "type": "string", "default": "**/{node_modules,.git}/**",
+          "description": "Glob pattern of files to skip when scanning folders."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -watch -p .",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "sharp": "^0.34.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.4.0"
+  }
+}
